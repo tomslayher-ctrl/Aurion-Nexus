@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AURION NEXUS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .admin-glow { color: #00ff41 !important; text-shadow: 0 0 10px rgba(0,255,65,0.6); font-weight: bold; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+        /* Modal visibility classes */
+        #nexus-modal.hidden { display: none; }
+        #nexus-modal.flex { display: flex; }
+    </style>
+</head>
+<body class="bg-[#1e1f22] h-screen flex text-gray-300 overflow-hidden select-none">
+
+    <div id="login-overlay" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[100]">
+        <div class="bg-[#2b2d31] p-8 rounded-lg border border-[#00ff41]/30 text-center w-80 shadow-2xl">
+            <h2 class="text-[#00ff41] font-bold text-2xl mb-4">AURION NEXUS</h2>
+            <input type="text" id="username-input" class="w-full bg-black/40 border border-white/10 p-3 rounded mb-4 text-[#00ff41] outline-none" placeholder="Username...">
+            <button id="login-btn" class="w-full bg-[#00ff41] text-black font-bold py-2 rounded uppercase text-sm hover:bg-white transition">Connect</button>
+        </div>
+    </div>
+
+    <div id="nexus-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[110]">
+        <div class="bg-[#2b2d31] p-6 rounded-lg border border-[#00ff41]/20 w-80 shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-2 right-3 text-gray-500 hover:text-white text-xl">×</button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 shrink-0">
+        <div class="w-12 h-12 bg-[#00ff41] text-black rounded-2xl flex items-center justify-center font-bold">AU</div>
+    </div>
+
+    <div class="w-60 bg-[#2b2d31] flex flex-col shrink-0">
+        <div onclick="openModal('server')" class="h-12 border-b border-black/20 flex items-center px-4 font-bold text-white cursor-pointer hover:bg-white/5 justify-between">
+            <span>AURION NETWORK</span>
+            <span class="text-[10px] opacity-40">▾</span>
+        </div>
+        <div class="flex-1 p-3" id="channel-list"></div>
+        
+        <div class="bg-[#232428] p-2 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-[#00ff41]/20 rounded-full border border-[#00ff41] flex items-center justify-center text-[#00ff41] font-bold text-[10px]" id="user-avatar">?</div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-white" id="display-name">Guest</span>
+                    <span class="text-[9px] text-[#00ff41] uppercase opacity-70" id="display-role">Everyone</span>
+                </div>
+            </div>
+            <button onclick="openModal('profile')" class="text-gray-400 hover:text-white transition-colors">⚙️</button>
+        </div>
+    </div>
+
+    <div class="flex-1 bg-[#313338] flex flex-col">
+        <div class="h-12 border-b border-black/20 flex items-center px-4 font-bold text-white" id="channel-header"># general-chat</div>
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-hide"></div>
+        <div class="p-4">
+            <input type="text" id="user-input" class="w-full bg-[#383a40] rounded-lg py-3 px-4 text-gray-200 outline-none" placeholder="Message...">
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js?v=fixed-nexus"></script>
+</body>
+</html>
