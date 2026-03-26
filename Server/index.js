@@ -1,77 +1,58 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const http = require('http'); 
-const { Server } = require('socket.io');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import fs from 'fs';
+import cors from 'cors';
 
 const app = express();
-const server = http.createServer(app); 
-const io = new Server(server); 
-const PORT = 3000;
-
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({ origin: "http://localhost:5173", methods: ["GET", "POST", "DELETE"] }));
 app.use(express.json());
 
-const DB_FILE = 'database.json';
-const LOG_FILE = 'chat_logs.txt'; // Define your log file
+const server = createServer(app);
+const io = new Server(server, { cors: { origin: "http://localhost:5173" } });
 
-const getData = () => JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-const saveData = (data) => fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+const DB_PATH = './database.json';
+const getDB = () => JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+const saveDB = (data) => fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 
-// Permissions Check
-function hasPermission(userId, permission) {
-    const data = getData();
-    const user = data.users[userId] || { roles: ['everyone'] };
-    const userRoles = data.roles.filter(r => user.roles.includes(r.id));
-    return userRoles.some(r => r.permissions.includes(permission) || r.permissions.includes('*'));
-}
+// This stays in memory so it clears if the server restarts
+let onlineUsers = {}; 
 
-// API Routes
-app.get('/api/data', (req, res) => res.json(getData()));
+app.get('/api/data', (req, res) => {
+    const data = getDB();
+    res.json({ ...data, onlineUsers }); 
+});
 
-// Socket.io Logic
+app.delete('/api/messages/:id', (req, res) => {
+    const targetId = req.params.id;
+    let dbData = getDB();
+    dbData.messages = dbData.messages.filter(m => String(m.id) !== String(targetId));
+    saveDB(dbData);
+    io.emit('dataUpdated');
+    res.sendStatus(200);
+});
+
 io.on('connection', (socket) => {
-    console.log('User connected to Nexus');
-
-    // Handle New Messages
-    socket.on('sendMessage', (msgData) => {
-        let data = getData();
-        const timestamp = new Date().toLocaleString(); // Better for text logs
-        
-        const newMsg = {
-            id: Date.now(),
-            userId: msgData.userId,
-            text: msgData.text,
-            channelId: msgData.channelId,
-            timestamp: new Date().toISOString()
-        };
-
-        // 1. Save to JSON Database
-        data.messages.push(newMsg);
-        saveData(data);
-
-        // 2. Append to chat_logs.txt
-        const logEntry = `[${timestamp}] Channel: ${msgData.channelId} | User: ${msgData.userId} | Message: ${msgData.text}\n`;
-        fs.appendFileSync(path.join(__dirname, LOG_FILE), logEntry);
-
-        // 3. Emit to all clients
-        io.emit('newMessage', newMsg); 
+    // When a user logs in, we link their Socket ID to their Name
+    socket.on('userLogin', (userData) => {
+        onlineUsers[socket.id] = userData;
+        io.emit('presenceUpdate', onlineUsers);
     });
 
-    // Handle Deletion
-    socket.on('deleteMessage', ({ messageId, userId }) => {
-        if (hasPermission(userId, 'MANAGE_MESSAGES')) {
-            let data = getData();
-            
-            // Optional: Log the deletion too!
-            const logEntry = `[${new Date().toLocaleString()}] ADMIN ACTION: User ${userId} deleted message ${messageId}\n`;
-            fs.appendFileSync(path.join(__dirname, LOG_FILE), logEntry);
+    socket.on('sendMessage', (msg) => {
+        let dbData = getDB();
+        const newMsg = { ...msg, id: Date.now().toString() };
+        dbData.messages.push(newMsg);
+        saveDB(dbData);
+        io.emit('newMessage', newMsg);
+    });
 
-            data.messages = data.messages.filter(m => m.id != messageId);
-            saveData(data);
-            io.emit('messageDeleted', messageId);
-        }
+    socket.on('disconnect', () => {
+        delete onlineUsers[socket.id];
+        io.emit('presenceUpdate', onlineUsers);
     });
 });
 
-server.listen(PORT, () => console.log(`AURION NEXUS ONLINE: http://localhost:${PORT}`));
+server.listen(3000, () => {
+    console.log("AURION NEXUS ONLINE (3000)");
+});

@@ -1,27 +1,4 @@
 {
-  "users": {
-    "admin": {
-      "username": "Nathan_Dev",
-      "displayName": "King",
-      "roles": [
-        "admin"
-      ]
-    }
-  },
-  "roles": [
-    {
-      "id": "admin",
-      "permissions": [
-        "*"
-      ]
-    },
-    {
-      "id": "everyone",
-      "permissions": [
-        "SEND_MESSAGES"
-      ]
-    }
-  ],
   "channels": [
     {
       "id": "1",
@@ -34,40 +11,71 @@
   ],
   "messages": [
     {
-      "id": 1774485556058,
-      "userId": "admin",
-      "text": "yo",
-      "channelId": "2",
-      "timestamp": "2026-03-26T00:39:16.058Z"
-    },
-    {
-      "id": 1774485635731,
-      "userId": "admin",
+      "userId": "King",
       "text": "yo",
       "channelId": "1",
-      "timestamp": "2026-03-26T00:40:35.731Z"
+      "id": "1774542759386"
     },
     {
-      "id": 1774485666231,
-      "userId": "admin",
-      "text": "logging?",
-      "channelId": "1",
-      "timestamp": "2026-03-26T00:41:06.231Z"
-    },
-    {
-      "id": 1774486405455,
-      "userId": "admin",
-      "text": "hi",
-      "channelId": "1",
-      "timestamp": "2026-03-26T00:53:25.455Z"
-    },
-    {
-      "id": 1774486933952,
-      "userId": "admin",
+      "userId": "King",
       "text": "yo",
       "channelId": "1",
-      "timestamp": "2026-03-26T01:02:13.952Z"
+      "id": "1774543758488"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543759432"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543759721"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543760033"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543760280"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543760560"
+    },
+    {
+      "userId": "King",
+      "text": "yo",
+      "channelId": "1",
+      "id": "1774543760832"
     }
   ],
-  "audit_logs": []
+  "users": {},
+  "roles": [
+    {
+      "id": "admin",
+      "name": "ADMIN",
+      "color": "#00ff41",
+      "permissions": [
+        "*"
+      ]
+    },
+    {
+      "id": "everyone",
+      "name": "USER",
+      "color": "#94a3b8",
+      "permissions": [
+        "SEND_MESSAGES"
+      ]
+    }
+  ]
 }

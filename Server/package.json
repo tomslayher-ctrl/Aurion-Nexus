@@ -1,22 +1,16 @@
 {
-  "name": "server",
+  "name": "aurion-nexus",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "brain": "node index.js",
+    "face": "npx vite public --port 5173"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "date-fns": "^4.1.0",
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "vite": "^5.0.0",
+    "cors": "^2.8.5"
   }
 }

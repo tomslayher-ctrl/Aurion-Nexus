@@ -1,76 +1,68 @@
-/* --- 1. CORE BRANDING: THE KING'S GLOW --- */
-.admin-glow { 
-    color: #00ff41 !important; 
-    /* Increased spread and intensity for the "King" look */
-    text-shadow: 0 0 12px rgba(0, 255, 65, 0.6), 0 0 4px rgba(0, 255, 65, 0.4); 
-    font-weight: 800;
-    letter-spacing: 0.3px;
+:root {
+    --aurion-green: #00ff41;
+    --bg-base: #0b0c0d;
+    --bg-sidebar: rgba(30, 31, 34, 0.85);
+    --bg-surface: #313338;
 }
 
-.text-glow {
-    text-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background-color: var(--bg-base); color: #dbdee1; overflow: hidden; }
+
+/* REFINED KING GLOW */
+.text-king-glow { 
+    color: var(--aurion-green) !important; 
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.4); 
+    font-weight: 900;
 }
 
-/* --- 2. LAYOUT & SCROLLING --- */
-/* Hide scrollbars for that clean Discord look while keeping functionality */
-.scroll-hide::-webkit-scrollbar { 
-    display: none; 
+/* SMOKED GLASS PANELS */
+.glass-sidebar {
+    background: var(--bg-sidebar) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.scroll-hide { 
-    -ms-overflow-style: none; 
-    scrollbar-width: none; 
+/* INDUSTRIAL INPUT BAR */
+#user-input-container {
+    background: rgba(56, 58, 64, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- 3. ANIMATIONS --- */
-/* Smooth slide-in for new messages */
-.msg-anim {
-    animation: slideIn 0.25s ease-out forwards;
+#user-input-container:focus-within {
+    background: rgba(56, 58, 64, 1);
+    border-color: var(--aurion-green);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.08);
+    transform: translateY(-1px);
 }
 
-@keyframes slideIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(8px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+/* SMOOTH FADE FOR MESSAGES */
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
+.message-animate { animation: slideUpFade 0.25s ease-out forwards; }
 
-/* Status indicator pulse */
+.message-grouped { margin-top: -10px; margin-left: 56px; }
+
+/* STATUS PULSE */
 .status-online {
-    position: relative;
+    width: 10px; height: 10px;
+    background-color: #23a55a;
+    border-radius: 50%;
+    animation: status-pulse 2s infinite;
+}
+@keyframes status-pulse {
+    0% { box-shadow: 0 0 0 0px rgba(35, 165, 90, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(35, 165, 90, 0); }
+    100% { box-shadow: 0 0 0 0px rgba(35, 165, 90, 0); }
 }
 
-.status-online::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    background: #23a55a;
-    animation: pulse 2s infinite;
-    z-index: -1;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(2); opacity: 0; }
-}
-
-/* --- 4. INTERACTIVE ELEMENTS --- */
-/* Smooth transition for the server dropdown menu items */
-#server-dropdown div {
-    transition: all 0.15s ease;
-}
-
-#server-dropdown div:hover {
-    transform: translateX(4px);
-}
-
-/* Focus state for the chat input */
-#user-input:focus {
-    background-color: #404249;
-    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.1);
+/* SETTINGS MODAL */
+#settings-modal { transition: opacity 0.3s ease; }
+.settings-card {
+    background: #18191c;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
