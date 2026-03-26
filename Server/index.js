@@ -13,66 +13,62 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const DB_FILE = 'database.json';
-const LOG_FILE = path.join(__dirname, 'chat_logs.txt');
 
-function systemLog(content) {
-    const entry = `[${new Date().toLocaleString()}] ${content}\n`;
-    fs.appendFileSync(LOG_FILE, entry);
+// Helper Functions
+const getData = () => JSON.parse(fs.readFileSync(DB_FILE));
+const saveData = (data) => fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+
+function logAction(userId, action, target) {
+    let data = getData();
+    data.audit_logs.push({
+        timestamp: new Date().toISOString(),
+        userId, action, target
+    });
+    saveData(data);
 }
 
+function hasPermission(userId, permission) {
+    const data = getData();
+    const user = data.users[userId];
+    if (!user) return false;
+    const userRoles = data.roles.filter(r => user.roles.includes(r.id));
+    return userRoles.some(r => r.permissions.includes(permission) || r.permissions.includes('*'));
+}
+
+// --- API ROUTES ---
+
+app.get('/api/data', (req, res) => res.json(getData()));
+
+// Update Profile
+app.post('/api/update-profile', (req, res) => {
+    const { userId, updates } = req.body;
+    let data = getData();
+    if (data.users[userId]) {
+        data.users[userId] = { ...data.users[userId], ...updates };
+        saveData(data);
+        io.emit('userUpdated', { userId, user: data.users[userId] });
+        res.sendStatus(200);
+    } else { res.sendStatus(404); }
+});
+
+// Move Message
+app.post('/api/move-message', (req, res) => {
+    const { messageId, newChannelId, userId } = req.body;
+    if (!hasPermission(userId, 'MANAGE_MESSAGES')) return res.sendStatus(403);
+
+    let data = getData();
+    const msgIndex = data.messages.findIndex(m => m.id == messageId);
+    if (msgIndex > -1) {
+        data.messages[msgIndex].channelId = newChannelId;
+        saveData(data);
+        logAction(userId, 'MOVE_MESSAGE', `Message ${messageId} to ${newChannelId}`);
+        io.emit('refreshData');
+        res.sendStatus(200);
+    } else { res.sendStatus(404); }
+});
+
 io.on('connection', (socket) => {
-    console.log('User connected to Nexus');
+    console.log('User connected');
 });
 
-app.get('/api/data', (req, res) => {
-    const data = JSON.parse(fs.readFileSync(DB_FILE));
-    res.json(data);
-});
-
-app.post('/api/messages', (req, res) => {
-    const { text, channelId, user } = req.body;
-    let data = JSON.parse(fs.readFileSync(DB_FILE));
-    
-    const msg = { 
-        id: Date.now(), 
-        channelId, 
-        user, 
-        text, 
-        time: new Date().toISOString() 
-    };
-    
-    data.messages.push(msg);
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-    systemLog(`CHAT [${channelId}] ${user}: ${text}`);
-    
-    // CRITICAL: This sends the message to the browser
-    io.emit('newMessage', msg); 
-    res.sendStatus(200);
-});
-
-// Admin Routes
-app.post('/api/channels', (req, res) => {
-    const { name, userRole } = req.body;
-    if (userRole === 'admin') {
-        let data = JSON.parse(fs.readFileSync(DB_FILE));
-        data.channels.push({ id: Date.now().toString(), name });
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-        io.emit('refreshData');
-        res.sendStatus(200);
-    } else { res.sendStatus(403); }
-});
-
-app.post('/api/delete-message', (req, res) => {
-    const { id, userRole } = req.body;
-    if (userRole === 'admin') {
-        let data = JSON.parse(fs.readFileSync(DB_FILE));
-        data.messages = data.messages.filter(m => m.id !== id);
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-        io.emit('refreshData');
-        res.sendStatus(200);
-    } else { res.sendStatus(403); }
-});
-
-server.listen(PORT, () => {
-    console.log(`AURION NEXUS ONLINE: http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`AURION NEXUS: http://localhost:${PORT}`));

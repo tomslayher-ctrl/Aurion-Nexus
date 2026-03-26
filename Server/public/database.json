@@ -1,0 +1,24 @@
+{
+  "users": {
+    "admin": {
+      "username": "Admin",
+      "displayName": "Server Owner",
+      "avatar": "default.png",
+      "roles": ["admin"],
+      "status": "online",
+      "customStatus": "Building Aurion Nexus",
+      "settings": { "theme": "dark", "notifications": true, "sound": true }
+    }
+  },
+  "roles": [
+    { "id": "admin", "name": "Admin", "priority": 100, "permissions": ["*"] },
+    { "id": "mod", "name": "Moderator", "priority": 50, "permissions": ["MANAGE_MESSAGES", "VIEW_AUDIT_LOG"] },
+    { "id": "everyone", "name": "@everyone", "priority": 0, "permissions": ["SEND_MESSAGES"] }
+  ],
+  "channels": [
+    { "id": "1", "name": "general" },
+    { "id": "2", "name": "announcements" }
+  ],
+  "messages": [],
+  "audit_logs": []
+}

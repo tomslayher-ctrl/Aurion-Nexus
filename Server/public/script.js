@@ -1,126 +1,121 @@
 const socket = io();
-let currentUser = "";
-let currentRole = "everyone"; 
-let activeChannel = "gen";
+let currentUser = null;
+let currentChannelId = '1';
 
-// --- LOGIN HANDLER ---
-// We use window.onload to ensure the button is ready before we try to click it
-window.onload = () => {
-    const loginBtn = document.getElementById('login-btn');
-    const usernameInput = document.getElementById('username-input');
-    const loginOverlay = document.getElementById('login-overlay');
+// --- 1. LOGIN SYSTEM ---
+async function login() {
+    const usernameInput = document.getElementById('username-input').value.trim();
+    if (!usernameInput) return alert("Please enter a username");
 
-    loginBtn.onclick = async () => {
-        const name = usernameInput.value.trim();
-        if (!name) return alert("Enter a username!");
+    try {
+        const response = await fetch('/api/data');
+        const data = await response.json();
 
-        const res = await fetch('/api/data');
-        const data = await res.json();
-        
-        // Exact check for Nathan_Dev
-        const userInDb = data.users.find(u => u.username === name);
-        
-        if (userInDb) {
-            currentUser = userInDb.username;
-            currentRole = userInDb.role;
+        // Find user by ID or Username
+        const userEntry = Object.entries(data.users).find(([id, info]) => 
+            id.toLowerCase() === usernameInput.toLowerCase() || 
+            info.username.toLowerCase() === usernameInput.toLowerCase()
+        );
+
+        if (userEntry) {
+            const [userId, userInfo] = userEntry;
+            currentUser = { id: userId, ...userInfo };
         } else {
-            currentUser = name;
-            currentRole = "everyone";
+            // New user / Guest login
+            currentUser = {
+                id: usernameInput.toLowerCase().replace(/\s/g, '_'),
+                username: usernameInput,
+                displayName: usernameInput,
+                roles: ['everyone']
+            };
         }
 
-        document.getElementById('display-name').innerText = currentUser;
-        document.getElementById('display-role').innerText = currentRole;
-        document.getElementById('user-avatar').innerText = currentUser.substring(0, 2).toUpperCase();
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('display-name').innerText = currentUser.displayName || currentUser.username;
         
-        loginOverlay.style.display = 'none';
-        loadNexus();
-    };
-};
+        loadApp(); // Initialize the dashboard
+    } catch (err) {
+        console.error("Login failed:", err);
+    }
+}
 
-// --- CORE ENGINE ---
-async function loadNexus() {
-    if (!currentUser) return;
+// --- 2. DATA LOADING & RENDERING ---
+async function loadApp() {
     const res = await fetch('/api/data');
     const data = await res.json();
     
-    // 1. Render Channels & Admin "+"
-    const channelContainer = document.getElementById('channel-list');
-    channelContainer.innerHTML = `
-        <div class="flex justify-between items-center mb-2 px-2">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channels</p>
-            ${currentRole === 'admin' ? '<button onclick="addChannel()" class="text-[#00ff41] hover:text-white">+</button>' : ''}
-        </div>`;
-
-    data.channels.forEach(ch => {
-        const div = document.createElement('div');
-        div.className = `px-2 py-1 rounded cursor-pointer mb-1 text-sm ${activeChannel === ch.id ? 'bg-zinc-700 text-white border-l-2 border-[#00ff41]' : 'text-gray-400 hover:bg-white/5'}`;
-        div.innerText = `# ${ch.name}`;
-        div.onclick = () => { activeChannel = ch.id; loadNexus(); };
-        channelContainer.appendChild(div);
-    });
-
-    // 2. Render Messages
-    const chatBox = document.getElementById('chat-box');
-    chatBox.innerHTML = "";
-    data.messages.filter(m => m.channelId === activeChannel).forEach(m => {
-        const userObj = data.users.find(u => u.username === m.user);
-        const isAdmin = userObj?.role === 'admin';
-        const div = document.createElement('div');
-        div.className = "flex gap-4 p-1 hover:bg-white/5 rounded";
-        div.innerHTML = `
-            <div class='w-10 h-10 ${isAdmin ? 'border-[#00ff41]' : 'border-white/10'} border rounded-full flex items-center justify-center font-bold text-[#00ff41] shrink-0'>${m.user[0]}</div>
-            <div>
-                <span class='font-bold ${isAdmin ? 'text-[#00ff41] admin-glow' : 'text-white'} text-sm'>${m.user}</span>
-                <div class='text-gray-300 text-sm'>${m.text}</div>
-            </div>`;
-        chatBox.appendChild(div);
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
+    renderChannels(data.channels);
+    renderMessages(data.messages);
 }
 
-// --- MODAL FUNCTIONS ---
-function openModal(type) {
-    const modal = document.getElementById('nexus-modal');
-    const content = document.getElementById('modal-content');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    if (type === 'profile') {
-        content.innerHTML = `<h3 class="text-[#00ff41] font-bold mb-4 uppercase text-xs">User Profile</h3>
-        <p class="text-white text-sm">Name: ${currentUser}</p>
-        <p class="text-[#00ff41] text-xs mb-4">Role: ${currentRole}</p>
-        <button onclick="location.reload()" class="w-full bg-zinc-800 py-2 rounded text-xs hover:bg-red-500">Disconnect</button>`;
-    } else {
-        content.innerHTML = `<h3 class="text-[#00ff41] font-bold mb-2 uppercase text-xs">Server Details</h3>
-        <p class="text-xs text-gray-400">Aurion Nexus Online<br>Version 1.0.5</p>`;
-    }
+function renderChannels(channels) {
+    const container = document.getElementById('channel-list');
+    container.innerHTML = channels.map(ch => `
+        <div class="channel-item ${ch.id === currentChannelId ? 'active' : ''}" 
+             onclick="switchChannel('${ch.id}')">
+            # ${ch.name}
+        </div>
+    `).join('');
 }
 
-function closeModal() {
-    const modal = document.getElementById('nexus-modal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+function renderMessages(messages) {
+    const container = document.getElementById('message-container');
+    const filtered = messages.filter(m => m.channelId === currentChannelId);
+    
+    container.innerHTML = filtered.map(m => `
+        <div class="message-card" data-id="${m.id}">
+            <span class="user-bold">${m.userId}:</span>
+            <span class="text-content">${m.text}</span>
+        </div>
+    `).join('');
+    container.scrollTop = container.scrollHeight;
 }
 
-async function addChannel() {
-    const name = prompt("Channel Name:");
-    if (!name) return;
-    await fetch('/api/channels', {
+// --- 3. PROFILE & MODALS ---
+function toggleModal(id, show) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    show ? modal.classList.remove('hidden') : modal.classList.add('hidden');
+}
+
+async function saveProfileChanges() {
+    const newName = document.getElementById('settings-display-name').value;
+    const status = document.getElementById('settings-status').value;
+
+    const res = await fetch('/api/update-profile', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ name: name.toLowerCase(), userRole: currentRole })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            userId: currentUser.id,
+            updates: { displayName: newName, customStatus: status }
+        })
     });
-    loadNexus();
+
+    if (res.ok) {
+        toggleModal('profile-modal', false);
+        loadApp(); // Refresh to see changes
+    }
 }
 
-// --- INPUTS & SOCKETS ---
-document.getElementById('user-input').onkeypress = async (e) => {
-    if (e.key === 'Enter' && e.target.value.trim()) {
-        const text = e.target.value;
-        e.target.value = "";
-        await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text, channelId: activeChannel, user: currentUser }) });
+// --- 4. CONTEXT MENU (Right Click) ---
+window.addEventListener('contextmenu', (e) => {
+    const msg = e.target.closest('.message-card');
+    const menu = document.getElementById('context-menu');
+    
+    if (msg && menu) {
+        e.preventDefault();
+        menu.style.top = `${e.pageY}px`;
+        menu.style.left = `${e.pageX}px`;
+        menu.classList.remove('hidden');
+        menu.dataset.selectedMsgId = msg.dataset.id;
     }
-};
+});
 
-socket.on('newMessage', () => loadNexus());
-socket.on('refreshData', () => loadNexus());
+window.addEventListener('click', () => {
+    const menu = document.getElementById('context-menu');
+    if (menu) menu.classList.add('hidden');
+});
+
+// --- 5. MESSAGE ACTIONS ---
+async function moveSelectedMessage(targetChannelId) {
+    const messageId = document.getElementById('context-menu').dataset.selectedMsgId;
