@@ -1,0 +1,12 @@
+/* THESE MUST BE THE FIRST 3 LINES */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom styles (neon scrollbar, body background) go BELOW them */
+body {
+  margin: 0;
+  background-color: #0D0208;
+}
+
+/* ... the rest of your scrollbar code ... */
