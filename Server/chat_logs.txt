@@ -10,3 +10,7 @@ User: yo wtf
 [3/25/2026, 6:26:23 PM] CHAT [gen] Nathan_Dev: hello?
 [3/25/2026, 6:29:23 PM] CHAT [gen] Nathan_Dev: yooo
 [3/25/2026, 6:30:53 PM] CHAT [gen] Nathan_Dev: gay
+[3/25/2026, 8:40:35 PM] Channel: 1 | User: admin | Message: yo
+[3/25/2026, 8:41:06 PM] Channel: 1 | User: admin | Message: logging?
+[3/25/2026, 8:53:25 PM] Channel: 1 | User: admin | Message: hi
+[3/25/2026, 9:02:13 PM] Channel: 1 | User: admin | Message: yo

@@ -2,120 +2,111 @@ const socket = io();
 let currentUser = null;
 let currentChannelId = '1';
 
-// --- 1. LOGIN SYSTEM ---
+// --- 1. THE LOGIN FUNCTION ---
 async function login() {
-    const usernameInput = document.getElementById('username-input').value.trim();
-    if (!usernameInput) return alert("Please enter a username");
+    const usernameInput = document.getElementById('username-input');
+    const val = usernameInput.value.trim();
+    
+    if (!val) return alert("Enter a name, King.");
 
     try {
         const response = await fetch('/api/data');
         const data = await response.json();
 
-        // Find user by ID or Username
+        // Check if user exists in your database.json
         const userEntry = Object.entries(data.users).find(([id, info]) => 
-            id.toLowerCase() === usernameInput.toLowerCase() || 
-            info.username.toLowerCase() === usernameInput.toLowerCase()
+            info.username.toLowerCase() === val.toLowerCase()
         );
 
         if (userEntry) {
             const [userId, userInfo] = userEntry;
             currentUser = { id: userId, ...userInfo };
         } else {
-            // New user / Guest login
-            currentUser = {
-                id: usernameInput.toLowerCase().replace(/\s/g, '_'),
-                username: usernameInput,
-                displayName: usernameInput,
-                roles: ['everyone']
+            // Guest login if not in database
+            currentUser = { 
+                id: val.toLowerCase().replace(/\s/g, '_'), 
+                username: val, 
+                displayName: val, 
+                roles: ['everyone'] 
             };
         }
 
+        // Hide login and show app
         document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('display-name').innerText = currentUser.displayName || currentUser.username;
+        document.getElementById('display-name').innerText = currentUser.displayName;
+        document.getElementById('display-role').innerText = currentUser.roles[0];
         
-        loadApp(); // Initialize the dashboard
+        loadApp();
     } catch (err) {
         console.error("Login failed:", err);
+        alert("Server error - check your terminal!");
     }
 }
 
-// --- 2. DATA LOADING & RENDERING ---
+// --- 2. THE UI & CHAT LOGIC ---
+function toggleServerMenu() {
+    const menu = document.getElementById('server-dropdown');
+    if (menu) menu.classList.toggle('hidden');
+}
+
 async function loadApp() {
     const res = await fetch('/api/data');
     const data = await res.json();
     
-    renderChannels(data.channels);
-    renderMessages(data.messages);
+    // Channels
+    const chanContainer = document.getElementById('channel-list');
+    if (chanContainer) {
+        chanContainer.innerHTML = data.channels.map(ch => `
+            <div class="p-2 rounded cursor-pointer mb-0.5 hover:bg-white/5 transition-colors ${ch.id === currentChannelId ? 'bg-white/10 text-white font-medium' : 'text-gray-400'}" 
+                 onclick="switchChannel('${ch.id}')"># ${ch.name}</div>
+        `).join('');
+    }
+
+    // Messages
+    const msgContainer = document.getElementById('chat-box');
+    if (msgContainer) {
+        const filtered = data.messages.filter(m => m.channelId === currentChannelId);
+        msgContainer.innerHTML = filtered.map(m => {
+            const isAdmin = m.userId === 'admin' || m.userId.toLowerCase() === 'nathan_dev';
+            const nameClass = isAdmin ? 'admin-glow' : 'text-white font-bold';
+            return `<div class="flex flex-col msg-anim">
+                        <span class="text-xs ${nameClass}">${m.userId}</span>
+                        <span class="text-[15px] text-[#dbdee1]">${m.text}</span>
+                    </div>`;
+        }).join('');
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
 }
 
-function renderChannels(channels) {
-    const container = document.getElementById('channel-list');
-    container.innerHTML = channels.map(ch => `
-        <div class="channel-item ${ch.id === currentChannelId ? 'active' : ''}" 
-             onclick="switchChannel('${ch.id}')">
-            # ${ch.name}
-        </div>
-    `).join('');
-}
+function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text || !currentUser) return;
 
-function renderMessages(messages) {
-    const container = document.getElementById('message-container');
-    const filtered = messages.filter(m => m.channelId === currentChannelId);
-    
-    container.innerHTML = filtered.map(m => `
-        <div class="message-card" data-id="${m.id}">
-            <span class="user-bold">${m.userId}:</span>
-            <span class="text-content">${m.text}</span>
-        </div>
-    `).join('');
-    container.scrollTop = container.scrollHeight;
-}
-
-// --- 3. PROFILE & MODALS ---
-function toggleModal(id, show) {
-    const modal = document.getElementById(id);
-    if (!modal) return;
-    show ? modal.classList.remove('hidden') : modal.classList.add('hidden');
-}
-
-async function saveProfileChanges() {
-    const newName = document.getElementById('settings-display-name').value;
-    const status = document.getElementById('settings-status').value;
-
-    const res = await fetch('/api/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId: currentUser.id,
-            updates: { displayName: newName, customStatus: status }
-        })
+    socket.emit('sendMessage', {
+        userId: currentUser.id,
+        text: text,
+        channelId: currentChannelId
     });
-
-    if (res.ok) {
-        toggleModal('profile-modal', false);
-        loadApp(); // Refresh to see changes
-    }
+    input.value = '';
 }
 
-// --- 4. CONTEXT MENU (Right Click) ---
-window.addEventListener('contextmenu', (e) => {
-    const msg = e.target.closest('.message-card');
-    const menu = document.getElementById('context-menu');
-    
-    if (msg && menu) {
-        e.preventDefault();
-        menu.style.top = `${e.pageY}px`;
-        menu.style.left = `${e.pageX}px`;
-        menu.classList.remove('hidden');
-        menu.dataset.selectedMsgId = msg.dataset.id;
+function switchChannel(id) {
+    currentChannelId = id;
+    loadApp();
+}
+
+socket.on('newMessage', () => loadApp());
+
+// Handle Enter Key
+document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        // If login is visible, login. Else, send message.
+        const loginVisible = !document.getElementById('login-overlay').classList.contains('hidden');
+        if (loginVisible) {
+            login();
+        } else {
+            sendMessage();
+        }
     }
 });
-
-window.addEventListener('click', () => {
-    const menu = document.getElementById('context-menu');
-    if (menu) menu.classList.add('hidden');
-});
-
-// --- 5. MESSAGE ACTIONS ---
-async function moveSelectedMessage(targetChannelId) {
-    const messageId = document.getElementById('context-menu').dataset.selectedMsgId;

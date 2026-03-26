@@ -1,0 +1,73 @@
+{
+  "users": {
+    "admin": {
+      "username": "Nathan_Dev",
+      "displayName": "King",
+      "roles": [
+        "admin"
+      ]
+    }
+  },
+  "roles": [
+    {
+      "id": "admin",
+      "permissions": [
+        "*"
+      ]
+    },
+    {
+      "id": "everyone",
+      "permissions": [
+        "SEND_MESSAGES"
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "id": "1",
+      "name": "general-chat"
+    },
+    {
+      "id": "2",
+      "name": "dev-logs"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1774485556058,
+      "userId": "admin",
+      "text": "yo",
+      "channelId": "2",
+      "timestamp": "2026-03-26T00:39:16.058Z"
+    },
+    {
+      "id": 1774485635731,
+      "userId": "admin",
+      "text": "yo",
+      "channelId": "1",
+      "timestamp": "2026-03-26T00:40:35.731Z"
+    },
+    {
+      "id": 1774485666231,
+      "userId": "admin",
+      "text": "logging?",
+      "channelId": "1",
+      "timestamp": "2026-03-26T00:41:06.231Z"
+    },
+    {
+      "id": 1774486405455,
+      "userId": "admin",
+      "text": "hi",
+      "channelId": "1",
+      "timestamp": "2026-03-26T00:53:25.455Z"
+    },
+    {
+      "id": 1774486933952,
+      "userId": "admin",
+      "text": "yo",
+      "channelId": "1",
+      "timestamp": "2026-03-26T01:02:13.952Z"
+    }
+  ],
+  "audit_logs": []
+}

@@ -1,22 +1,76 @@
-.status-blink {
-    animation: blink 1.5s step-end infinite;
+/* --- 1. CORE BRANDING: THE KING'S GLOW --- */
+.admin-glow { 
+    color: #00ff41 !important; 
+    /* Increased spread and intensity for the "King" look */
+    text-shadow: 0 0 12px rgba(0, 255, 65, 0.6), 0 0 4px rgba(0, 255, 65, 0.4); 
+    font-weight: 800;
+    letter-spacing: 0.3px;
 }
 
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+.text-glow {
+    text-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
 }
 
-/* Hide scrollbars but keep functionality */
-.scroll-hide::-webkit-scrollbar { display: none; }
-.scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* --- 2. LAYOUT & SCROLLING --- */
+/* Hide scrollbars for that clean Discord look while keeping functionality */
+.scroll-hide::-webkit-scrollbar { 
+    display: none; 
+}
 
-/* Slide-in animation for new messages */
+.scroll-hide { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* --- 3. ANIMATIONS --- */
+/* Smooth slide-in for new messages */
 .msg-anim {
-    animation: slideIn 0.2s ease-out forwards;
+    animation: slideIn 0.25s ease-out forwards;
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
+    from { 
+        opacity: 0; 
+        transform: translateY(8px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Status indicator pulse */
+.status-online {
+    position: relative;
+}
+
+.status-online::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: #23a55a;
+    animation: pulse 2s infinite;
+    z-index: -1;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+/* --- 4. INTERACTIVE ELEMENTS --- */
+/* Smooth transition for the server dropdown menu items */
+#server-dropdown div {
+    transition: all 0.15s ease;
+}
+
+#server-dropdown div:hover {
+    transform: translateX(4px);
+}
+
+/* Focus state for the chat input */
+#user-input:focus {
+    background-color: #404249;
+    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.1);
 }
